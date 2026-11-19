@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>File manager in RUST</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<header class="topbar">
+  <button id="btnDrawer" class="iconBtn narrowOnly" title="Místa a připnuté složky">☰</button>
+  <div class="brand">📁 File manager in <span>RUST</span></div>
+  <div class="actions">
+    <span id="drives" class="drives"></span>
+    <button id="btnHome">Domů</button>
+    <button id="btnBack">← Zpět</button>
+    <button id="btnUp">↑ Nahoru</button>
+    <button id="btnNewFolder">+ Složka</button>
+    <button id="btnDual" class="wideOnly" title="Dva panely vedle sebe">◫ Dva panely</button>
+  </div>
+  <div class="moreWrap">
+    <button id="btnMore" class="iconBtn" title="Další volby">⋯</button>
+    <div id="moreMenu" class="menu" hidden>
+      <button data-cmd="view" id="mView">▦ Mřížka</button>
+      <label class="check menuCheck"><input type="checkbox" id="showHidden" /> Skryté soubory</label>
+      <button data-cmd="sizes">📊 Analýza místa</button>
+      <button data-cmd="pin" id="mPin">📌 Připnout tuto složku</button>
+      <button data-cmd="newtab">＋ Nová karta</button>
+    </div>
+  </div>
+</header>
+
+<div id="permBanner" class="banner" hidden>
+  <b>Appka zatím nevidí soubory v telefonu.</b>
+  <span>Povol „Přístup ke všem souborům“: Nastavení → Aplikace → File manager in RUST → Oprávnění → Přístup ke všem souborům.</span>
+</div>
+
+<div class="layout">
+  <aside id="sidebar" class="sidebar">
+    <div class="sbHead"><b>Místa</b></div>
+    <nav id="places" class="places"><small class="sbNote">Načítám…</small></nav>
+    <div class="sbHead">
+      <b>Připnuté</b>
+      <button id="btnPinCur" class="sbBtn" title="Připnout aktuální složku">📌 +</button>
+    </div>
+    <nav id="pins" class="places"></nav>
+  </aside>
+  <div id="backdrop" class="backdrop" hidden></div>
+  <div id="panes" class="panes"></div>
+</div>
+
+<template id="paneTpl">
+  <section class="pane">
+    <div class="paneHead">
+      <div class="tabs">
+        <div class="tabList"></div>
+        <button class="tabNew" title="Nová karta (otevře tuto složku)">+</button>
+      </div>
+      <div class="toolbar">
+        <input class="search" type="search" placeholder="Hledat v této složce…" />
+        <button class="btnFilters" title="Filtry hledání">⚙ Filtry</button>
+        <select class="sort" title="Řazení">
+          <option value="name">Název</option>
+          <option value="size">Velikost</option>
+          <option value="date">Datum</option>
+          <option value="kind">Typ</option>
+        </select>
+        <button class="btnView" title="Přepnout mřížku / seznam">▦</button>
+        <button class="btnPaste paste" hidden>Vložit</button>
+      </div>
+      <div class="filters" hidden>
+        <select class="fKind" title="Typ souboru">
+          <option value="">Jakýkoli typ</option>
+          <option value="image">Obrázky</option>
+          <option value="video">Videa</option>
+          <option value="audio">Hudba</option>
+          <option value="document">Dokumenty</option>
+          <option value="archive">Archivy</option>
+          <option value="code">Kód</option>
+          <option value="other">Ostatní</option>
+        </select>
+        <select class="fSize" title="Velikost">
+          <option value="">Jakákoli velikost</option>
+          <option value="lt1m">Menší než 1 MB</option>
+          <option value="1m-100m">1 MB – 100 MB</option>
+          <option value="gt100m">Větší než 100 MB</option>
+          <option value="gt1g">Větší než 1 GB</option>
+        </select>
+        <select class="fDate" title="Změněno">
+          <option value="">Změněno kdykoli</option>
+          <option value="today">Dnes</option>
+          <option value="7">Posledních 7 dní</option>
+          <option value="30">Posledních 30 dní</option>
+          <option value="365">Poslední rok</option>
+        </select>
+        <select class="fDepth" title="Hloubka hledání">
+          <option value="3">Hloubka 3</option>
+          <option value="6">Hloubka 6</option>
+          <option value="12" selected>Hloubka 12</option>
+          <option value="40">Hloubka 40</option>
+        </select>
+        <label class="check"><input type="checkbox" class="fContent" /> Hledat i v obsahu</label>
+      </div>
+    </div>
+
+    <div class="selbar" hidden>
+      <span class="selCount">0 vybráno</span>
+      <button data-sel="copy">Kopírovat</button>
+      <button data-sel="move">Přesunout</button>
+      <button data-sel="zip">Zabalit do ZIP</button>
+      <button data-sel="copyOther" class="dualOnly">Kopírovat do druhého panelu</button>
+      <button data-sel="moveOther" class="dualOnly">Přesunout do druhého panelu</button>
+      <button data-sel="delete" class="danger">Smazat</button>
+      <button data-sel="clear">Zrušit</button>
+    </div>
+
+    <div class="sizesHead" hidden>
+      <b>📊 Analýza místa</b>
+      <button data-sz="up">↑ O úroveň výš</button>
+      <button data-sz="close">Zavřít analýzu</button>
+    </div>
+
+    <div class="crumbs"></div>
+    <div class="status">Načítám…</div>
+    <div class="list"></div>
+    <div class="empty" hidden>Prázdná složka</div>
+  </section>
+</template>
+
+<div id="preview" class="overlay" hidden>
+  <div class="sheet">
+    <div class="sheetHead">
+      <b id="pvName"></b>
+      <button id="pvClose">Zavřít</button>
+    </div>
+    <div id="pvBody" class="sheetBody"></div>
+    <div class="sheetFoot">
+      <button id="pvOpen">Otevřít v systému</button>
+      <button id="pvUnzip" hidden>Rozbalit</button>
+      <button id="pvRename">Přejmenovat</button>
+      <button id="pvDelete" class="danger">Smazat</button>
+    </div>
+  </div>
+</div>
+
+<div id="dialog" class="overlay" hidden>
+  <form class="dialog" id="dlgForm">
+    <b id="dlgTitle"></b>
+    <p id="dlgText" class="dlgText"></p>
+    <input id="dlgInput" type="text" hidden />
+    <label id="dlgCheckWrap" class="check" hidden><input type="checkbox" id="dlgCheck" /> <span id="dlgCheckLabel"></span></label>
+    <div class="dlgActions">
+      <button type="button" id="dlgCancel">Zrušit</button>
+      <button type="submit" id="dlgOk">OK</button>
+    </div>
+  </form>
+</div>
+
+<div id="progress" class="overlay" hidden>
+  <div class="dialog">
+    <b id="pgTitle"></b>
+    <p id="pgFile" class="dlgText pgFile"></p>
+    <div class="bar pgBar"><i id="pgFill"></i></div>
+    <p id="pgStat" class="dlgText"></p>
+    <div class="dlgActions">
+      <button type="button" id="pgCancel">Zrušit</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<script src="main.js"></script>
+</body>
+</html>

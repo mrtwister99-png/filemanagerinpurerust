@@ -1,0 +1,7 @@
+[package]
+name = "filemanager-cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+filecore = { path = "../crates/filecore" }

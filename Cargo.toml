@@ -1,0 +1,49 @@
+[workspace]
+members = [
+    "crates/filecore",
+    "apps/filemanager/src-tauri",
+    "cli",
+]
+resolver = "2"
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+
+# Dekodovani obrazku (nahledy) a deflate jsou v neoptimalizovanem debug buildu
+# desetkrat pomalejsi - tyhle knihovny optimalizujeme i ve vyvojovem buildu.
+[profile.dev.package.image]
+opt-level = 3
+[profile.dev.package.png]
+opt-level = 3
+[profile.dev.package."zune-jpeg"]
+opt-level = 3
+[profile.dev.package."zune-core"]
+opt-level = 3
+[profile.dev.package."image-webp"]
+opt-level = 3
+[profile.dev.package.gif]
+opt-level = 3
+[profile.dev.package.weezl]
+opt-level = 3
+[profile.dev.package.fdeflate]
+opt-level = 3
+[profile.dev.package.miniz_oxide]
+opt-level = 3
+[profile.dev.package.flate2]
+opt-level = 3
+[profile.dev.package."zlib-rs"]
+opt-level = 3
+[profile.dev.package.crc32fast]
+opt-level = 3
+[profile.dev.package."simd-adler32"]
+opt-level = 3
+[profile.dev.package.moxcms]
+opt-level = 3
+[profile.dev.package.pxfm]
+opt-level = 3

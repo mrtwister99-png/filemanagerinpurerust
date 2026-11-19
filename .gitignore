@@ -1,0 +1,9 @@
+target/
+node_modules/
+**/gen/
+*.apk
+*.aab
+*.jks
+*.keystore
+.DS_Store
+.freebuff/

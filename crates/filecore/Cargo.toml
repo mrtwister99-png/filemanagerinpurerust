@@ -1,0 +1,24 @@
+[package]
+name = "filecore"
+version = "0.1.0"
+edition = "2021"
+description = "Ciste Rust jadro file manageru - bez UI, bez Tauri, pouzitelne na desktopu i na Androidu"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+walkdir = "2"
+rayon = "1"
+# Nahledy obrazku - jen ciste Rust dekodery, zadne C zavislosti (kvuli Androidu)
+image = { version = "0.25", default-features = false, features = ["jpeg", "png", "gif", "webp", "bmp"] }
+# ZIP - jen deflate, bez bzip2/zstd/lzma (ty tahaji C knihovny)
+zip = { version = "9", default-features = false, features = ["deflate"] }
+# Volne / celkove misto na disku, bez libc (rustix na Androidu, WinAPI na Windows)
+fs4 = "1"
+
+# Systemovy kos jen na desktopu - Android zadny kos nema
+[target.'cfg(not(target_os = "android"))'.dependencies]
+trash = "5"
+
+[dev-dependencies]
+tempfile = "3"
