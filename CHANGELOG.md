@@ -4,6 +4,10 @@ Formát vychází z [Keep a Changelog](https://keepachangelog.com/cs/1.1.0/).
 
 ## [Nevydáno]
 
+### Přidáno
+- Windows instalátory (`.msi` a NSIS `.exe`) přes `cargo tauri build`; v `tauri.conf.json`
+  doplněn seznam ikon `bundle.icon`.
+
 ### Opraveno
 - Android: nativní knihovna je zarovnaná na 16KB stránky (`.cargo/config.toml`), zmizelo
   varování „aplikace není kompatibilní s 16KB režimem“ na Androidu 15+.

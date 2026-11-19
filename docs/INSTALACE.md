@@ -69,7 +69,15 @@ cd apps\filemanager
 cargo tauri build
 ```
 
-Výsledek (`.exe` a `.msi`) najdeš v `target\release\bundle\`.
+Výsledek najdeš v `target\release\bundle\`:
+
+- `nsis\File manager in RUST_0.1.0_x64-setup.exe` (~2,7 MB) – instalátor jedním klikem,
+- `msi\File manager in RUST_0.1.0_x64_en-US.msi` (~4 MB) – klasický MSI.
+
+Aplikace se nainstaluje do nabídky Start s ikonou a jde odinstalovat v Nastavení → Aplikace.
+První build stáhne nástroje WiX a NSIS (dělá to Tauri samo). Instalátor je nepodepsaný,
+takže Windows SmartScreen může při prvním spuštění ukázat varování („Další informace →
+Přesto spustit“).
 
 ## 3. Android – APK z terminálu
 
@@ -184,4 +192,5 @@ nenahrávej do gitu.**
 | Android ukáže „Kompatibilita aplikací… 16KB“ | knihovna není zarovnaná na 16KB stránky (Android 15+). Řeší to `.cargo/config.toml` s linker flagem `-z max-page-size=16384`; pokud varování vidíš u starého APK, sestav a nainstaluj ho znovu. Ověření: `llvm-readelf -lW libfilemanager_lib.so \| findstr LOAD` – zarovnání musí být `0x4000` |
 | `The process cannot access the file … filemanager.exe` při buildu | aplikace ještě běží: zavři ji (`taskkill /F /IM filemanager.exe`) |
 | Po změně frontendu se nic nezměnilo | frontend je zabudovaný v exe – přelož znovu (`cargo build -p filemanager`) |
+| `Couldn't find a .ico icon` při `cargo tauri build` | v `tauri.conf.json` musí být `bundle.icon` se seznamem ikon (už je) |
 | Chci aplikaci vrátit do výchozího stavu | stav (karty, připnuté složky…) je v úložišti webview; na Windows smaž složku `%LOCALAPPDATA%\cz.tvojefm.filemanager` při zavřené aplikaci |
