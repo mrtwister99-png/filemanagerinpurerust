@@ -168,13 +168,64 @@ Když přístup chybí, aplikace ukáže banner s návodem. Pro Google Play by s
 musel použít Storage Access Framework (`MANAGE_EXTERNAL_STORAGE` Google u správců souborů
 povoluje jen výjimečně); pro vlastní telefon takto stačí.
 
-## 6. Release build a podepsání (volitelné)
+## 6. Release APK (finální verze) a podepsání
 
-Debug APK podepisuje Android Studio/Gradle automaticky ladicím klíčem. Pro release
-si vytvoř vlastní klíč (`keytool -genkey -v -keystore moje.jks -keyalg RSA -keysize 2048
--validity 10000 -alias klic`) a podepiš podle
-<https://v2.tauri.app/distribute/sign/android/>. **Klíč (`*.jks`) a hesla nikdy
-nenahrávej do gitu.**
+Debug APK je obří (~220 MB, ladicí informace) a podepsané ladicím klíčem. **Release APK** má
+kolem **9 MB**, není ladicí a je podepsané vlastním klíčem.
+
+### Klíč (jednou)
+
+Vytvoř si vlastní podpisový klíč mimo repozitář, např. do `C:\Users\jmeno\.android-keys\`:
+
+```powershell
+keytool -genkeypair -v -keystore $env:USERPROFILE\.android-keys\filemanager-release.jks `
+  -storetype PKCS12 -alias filemanager -keyalg RSA -keysize 2048 -validity 10000 `
+  -dname "CN=File manager in RUST"
+```
+
+a vedle něj soubor `filemanager-release.properties` (cesty s lomítky `/`):
+
+```
+storeFile=C:/Users/jmeno/.android-keys/filemanager-release.jks
+storePassword=...heslo...
+keyAlias=filemanager
+keyPassword=...heslo...
+```
+
+Jiné umístění nastavíš proměnnou prostředí `FM_KEYSTORE_PROPERTIES`.
+**Klíč (`*.jks`) a hesla nikdy nenahrávej do gitu a zálohuj je** – bez stejného klíče nejde
+aplikace v telefonu aktualizovat přes starší verzi (Android odmítne jiný podpis).
+
+### Sestavení
+
+```powershell
+cd apps\filemanager
+python ..\..\scripts\android_manifest_perms.py      # doplní i podepisování do gen/ (jednou po android init)
+cargo tauri android build --apk --target aarch64
+```
+
+Výsledek:
+
+```
+apps/filemanager/src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk
+```
+
+`--target aarch64` staví jen pro 64bitové telefony (všechny dnešní). Pro starší 32bitové
+přidej `--target armv7`, celé univerzální APK bez `--target` je větší.
+
+### Ověření
+
+```powershell
+$bt = "$env:LOCALAPPDATA\Android\Sdk\build-tools\36.0.0"
+& "$bt\apksigner.bat" verify --print-certs app-universal-release.apk
+& "$bt\zipalign.exe" -c -P 16 -v 4 app-universal-release.apk
+```
+
+### Instalace
+
+Release je podepsané **jiným klíčem než debug**, takže ho Android nenainstaluje přes
+debug verzi: nejdřív debug verzi v telefonu odinstaluj (soubory zůstanou, uložené karty
+a připnuté složky aplikace se smažou).
 
 ## 7. Řešení problémů
 

@@ -3,7 +3,9 @@
   1. doplni do AndroidManifest.xml opravneni pro file manager,
   2. upravi MainActivity.kt, aby obsah nelezl pod stavovou listu (hodiny, baterie)
      a pod navigacni listu (tlacitka Zpet / Domu) - Android 15+ vykresluje appky
-     "od kraje ke kraji" a bez teto upravy je listy prekryvaji.
+     "od kraje ke kraji" a bez teto upravy je listy prekryvaji,
+  3. nastavi podepisovani release APK klicem z ~/.android-keys/filemanager-release.properties
+     (klic ani hesla nejsou v repozitari; viz docs/INSTALACE.md).
 
 Spousti se z scripts/build-android.bat / .sh po `cargo tauri android init`.
 Je idempotentni - opakovane spusteni nic nerozbije.
@@ -86,10 +88,57 @@ def patch_activity() -> int:
     return 0
 
 
+GRADLE = os.path.join(
+    ROOT, "apps", "filemanager", "src-tauri", "gen", "android", "app", "build.gradle.kts",
+)
+
+SIGN_BLOCK = """    // FM-SIGNING: klic pro release APK (mimo repozitar), upraveno skriptem
+    val fmKeyProps = Properties().apply {
+        val f = file(System.getenv("FM_KEYSTORE_PROPERTIES")
+            ?: (System.getProperty("user.home") + "/.android-keys/filemanager-release.properties"))
+        if (f.exists()) f.inputStream().use { load(it) }
+    }
+    signingConfigs {
+        if (fmKeyProps.containsKey("storeFile")) {
+            create("fmRelease") {
+                storeFile = file(fmKeyProps.getProperty("storeFile"))
+                storePassword = fmKeyProps.getProperty("storePassword")
+                keyAlias = fmKeyProps.getProperty("keyAlias")
+                keyPassword = fmKeyProps.getProperty("keyPassword")
+            }
+        }
+    }
+"""
+
+
+def patch_signing() -> int:
+    if not os.path.exists(GRADLE):
+        print("CHYBA: chybi %s" % GRADLE)
+        return 1
+    with open(GRADLE, "r", encoding="utf-8") as f:
+        text = f.read()
+    if "FM-SIGNING" in text:
+        print("build.gradle.kts: podepisovani uz je nastavene, nic nemenim.")
+        return 0
+    if "    buildTypes {\n" not in text or '        getByName("release") {\n' not in text:
+        print("POZOR: build.gradle.kts ma jinou strukturu, podepisovani nenastaveno.")
+        return 1
+    text = text.replace("    buildTypes {\n", SIGN_BLOCK + "    buildTypes {\n", 1)
+    text = text.replace(
+        '        getByName("release") {\n',
+        '        getByName("release") {\n'
+        '            signingConfigs.findByName("fmRelease")?.let { signingConfig = it }\n', 1)
+    with open(GRADLE, "w", encoding="utf-8", newline="\n") as f:
+        f.write(text)
+    print("build.gradle.kts: release APK se bude podepisovat klicem z ~/.android-keys.")
+    return 0
+
+
 def main() -> int:
     rc = patch_manifest()
     rc2 = patch_activity()
-    return rc or rc2
+    rc3 = patch_signing()
+    return rc or rc2 or rc3
 
 
 def patch_manifest() -> int:
