@@ -43,6 +43,9 @@ Zásady:
 s atributem `#[cfg_attr(mobile, tauri::mobile_entry_point)]` (Android potřebuje knihovnu
 `cdylib`), `main.rs` jen volá `filemanager_lib::run()` pro desktop.
 
+Soubor `.cargo/config.toml` nastavuje pro Android targety (`aarch64`, `x86_64`) linker flag
+`-Wl,-z,max-page-size=16384`, aby byla knihovna zarovnaná na 16KB stránky (Android 15+).
+
 Profily (`[profile.release]` a optimalizace obrazových knihoven v `[profile.dev.package.*]`)
 musí být v **kořenovém** `Cargo.toml`, v podřízeném crate se ignorují.
 

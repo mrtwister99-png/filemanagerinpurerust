@@ -135,5 +135,5 @@ Android 11+ chrání úložiště. Aby aplikace viděla soubory, povol:
 **Nastavení → Aplikace → File manager in RUST → Oprávnění → Přístup ke všem souborům.**
 Dokud chybí, aplikace ukáže žlutý banner s tímto návodem.
 
-Při prvním spuštění debug verze může Android ukázat varování o „16KB režimu“. Je to jen
-upozornění na zarovnání knihovny, aplikace funguje; stačí potvrdit **OK**.
+Pokud Android při spuštění ukáže varování o „16KB režimu“, máš starší APK – sestav ho
+a nainstaluj znovu (viz [INSTALACE.md](INSTALACE.md)), nová verze je zarovnaná správně.

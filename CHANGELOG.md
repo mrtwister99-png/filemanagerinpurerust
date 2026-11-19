@@ -2,6 +2,12 @@
 
 Formát vychází z [Keep a Changelog](https://keepachangelog.com/cs/1.1.0/).
 
+## [Nevydáno]
+
+### Opraveno
+- Android: nativní knihovna je zarovnaná na 16KB stránky (`.cargo/config.toml`), zmizelo
+  varování „aplikace není kompatibilní s 16KB režimem“ na Androidu 15+.
+
 ## [0.1.0] – 2026-11-19
 
 První verze pod názvem **File manager in RUST**.
@@ -36,6 +42,5 @@ První verze pod názvem **File manager in RUST**.
 - `[profile.release]` přesunut do kořenového `Cargo.toml`, kde se skutečně použije.
 
 ### Známá omezení
-- Android: varování o 16KB zarovnání knihovny v debug buildu (aplikace funguje).
 - Android: zatím vyzkoušeno jen spuštění a výpis souborů, ne všechny funkce.
 - Časy souborů v ZIPu jsou v UTC (Průzkumník Windows je ukáže o hodinu posunuté).

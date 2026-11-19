@@ -36,6 +36,7 @@ cargo run -p filemanager-cli -- places
 | Android: „no library targets found“ | Tauri pro mobil potřebuje `cdylib` | `lib.rs` + `[lib]` v `src-tauri/Cargo.toml` |
 | Android: „Additional properties… 'ios'“ | klíč v `tauri.conf.json` se jmenuje `iOS` | opraveno |
 | Android: „Creation symbolic link is not allowed“ | Windows bez Vývojářského režimu | zapnout režim (viz [INSTALACE.md](INSTALACE.md)) |
+| Android: varování „aplikace není kompatibilní s 16KB režimem“ | NDK 27 zarovnává knihovny jen na 4 KB | `.cargo/config.toml` přidává `-Wl,-z,max-page-size=16384` pro `aarch64` a `x86_64` Android |
 | Disky se vracely jako `C:\\` | zdvojené zpětné lomítko ve `format!` | opraveno v `scanner.rs` |
 
 ## Jak přidat novou funkci
@@ -81,7 +82,6 @@ Pořadí, které se osvědčilo:
 ## Nápady na další vývoj
 
 - klávesové zkratky (Ctrl+C/V/X, Delete, F2, Enter) a kontextové menu pravým tlačítkem,
-- oprava 16KB zarovnání knihovny pro Android 15+ (linker flag `-z max-page-size=16384`),
 - release build a podepsání APK, případně ikona aplikace,
 - přesun mezi disky a velké soubory vyzkoušet i na Androidu,
 - Storage Access Framework místo „Přístup ke všem souborům“ (kvůli Google Play),

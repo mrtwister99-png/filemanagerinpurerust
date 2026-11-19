@@ -181,7 +181,7 @@ nenahrávej do gitu.**
 | `adb devices` je prázdné | jiný kabel/port, znovu povolit Ladění USB, režim USB „Přenos souborů“ |
 | `adb devices` ukáže `unauthorized` | v telefonu potvrď dotaz „Povolit ladění USB“ |
 | Na telefonu prázdné nebo nedostupné složky | chybí Přístup ke všem souborům (bod 5) |
-| Android ukáže „Kompatibilita aplikací… 16KB“ | jen varování o zarovnání knihovny v debug buildu; aplikace funguje, potvrď OK |
+| Android ukáže „Kompatibilita aplikací… 16KB“ | knihovna není zarovnaná na 16KB stránky (Android 15+). Řeší to `.cargo/config.toml` s linker flagem `-z max-page-size=16384`; pokud varování vidíš u starého APK, sestav a nainstaluj ho znovu. Ověření: `llvm-readelf -lW libfilemanager_lib.so \| findstr LOAD` – zarovnání musí být `0x4000` |
 | `The process cannot access the file … filemanager.exe` při buildu | aplikace ještě běží: zavři ji (`taskkill /F /IM filemanager.exe`) |
 | Po změně frontendu se nic nezměnilo | frontend je zabudovaný v exe – přelož znovu (`cargo build -p filemanager`) |
 | Chci aplikaci vrátit do výchozího stavu | stav (karty, připnuté složky…) je v úložišti webview; na Windows smaž složku `%LOCALAPPDATA%\cz.tvojefm.filemanager` při zavřené aplikaci |
