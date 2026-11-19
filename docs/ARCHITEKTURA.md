@@ -46,6 +46,12 @@ s atributem `#[cfg_attr(mobile, tauri::mobile_entry_point)]` (Android potřebuje
 Soubor `.cargo/config.toml` nastavuje pro Android targety (`aarch64`, `x86_64`) linker flag
 `-Wl,-z,max-page-size=16384`, aby byla knihovna zarovnaná na 16KB stránky (Android 15+).
 
+`scripts/android_manifest_perms.py` (volaný z build skriptů) navíc přepíše vygenerovaný
+`MainActivity.kt` (složka `gen/` není v gitu): aktivita je „od kraje ke kraji“ (Android 15+),
+ale obsah posune o `systemBars + displayCutout + ime` (`setOnApplyWindowInsetsListener`),
+nastaví tmavé pozadí a světlé ikony lišt. Díky tomu aplikace nezajíždí pod hodiny/baterii ani
+pod tlačítka Zpět/Domů a klávesnice odsune obsah.
+
 Profily (`[profile.release]` a optimalizace obrazových knihoven v `[profile.dev.package.*]`)
 musí být v **kořenovém** `Cargo.toml`, v podřízeném crate se ignorují.
 
@@ -58,6 +64,7 @@ musí být v **kořenovém** `Cargo.toml`, v podřízeném crate se ignorují.
 | `search.rs` | `search_with`, `SearchOptions` | hledání s filtry; `walkdir` + `rayon::par_bridge`, strom se nedrží celý v paměti; zrušitelné; obsah jen u textu do 1 MB |
 | `ops.rs` | `create_dir`, `rename_entry`, `remove_entry`, `trash_entry`, `copy_entry`, `move_entry`, `get_info`, `read_text_preview` | jednoduché operace; `copy_entry`/`move_entry` jsou obálky nad `transfer` |
 | `transfer.rs` | `transfer_entries`, `TransferProgress`, `TransferSummary` | kopie/přesun po blocích 1 MiB s hlášením průběhu a zrušením |
+| `bin.rs` | `bin_list`, `bin_restore`, `bin_purge`, `bin_empty`, `bin_put`, `BinItem`; modul `appbin` | koš: Windows/Linux systémový přes `trash::os_limited`, Android vlastní koš aplikace (viz níže) |
 | `archive.rs` | `zip_entries`, `unzip_archive` | ZIP (deflate); `enclosed_name` proti zip-slip; unikátní názvy |
 | `thumbs.rs` | `thumbnail_jpeg` | miniatura JPEG (q80), respektuje EXIF orientaci, soubory nad 64 MB odmítá |
 | `sizes.rs` | `child_sizes`, `dir_size` | rekurzivní velikosti paralelně, symlinky se nesledují, zrušitelné |
@@ -68,6 +75,23 @@ musí být v **kořenovém** `Cargo.toml`, v podřízeném crate se ignorují.
 
 Dlouhé funkce dostávají `is_cancelled: &dyn Fn() -> bool` a pravidelně se ptají. Jádro tak
 nezná žádný konkrétní mechanismus rušení.
+
+### Koš (`bin.rs`)
+
+Jedno API (`BinItem { id, name, original_dir, deleted_unix, size, is_dir }`), dvě implementace:
+
+- **Windows / Linux**: `trash::os_limited::{list, metadata, restore_all, purge_all}`; `id` je
+  identifikátor položky v systémovém koši. Seznam se vždy znovu načte a položky se vyberou
+  podle `id`.
+- **Android** (`appbin`): systémový koš není, proto má každé úložiště skrytou složku
+  `.FileManagerTrash/`. Smazaná položka dostane složku `<id>/` s `meta.json`
+  (původní cesta, čas, velikost) a samotnou položkou. `id` v UI je cesta ke složce
+  `<id>/`; před obnovením a smazáním se ověřuje, že leží **přímo** v některém koši
+  (ochrana proti smazání cizí cesty). Přesun do koše používá `move_entry` (rychlý
+  `rename`, mezi disky kopie + smazání). Koš nelze hodit do sebe.
+
+Kód `appbin` se překládá na všech platformách, takže ho jde testovat na PC
+(`cargo test -p filecore`).
 
 ### Kopírování a přesun (`transfer.rs`)
 
@@ -98,7 +122,10 @@ Příkazy, které mohou trvat, jsou `async` a práci dělají ve `spawn_blocking
 | `cancel_job_cmd(job)` | zruší běžící úlohu podle klíče |
 | `zip_cmd(paths, dest, name)` / `unzip_cmd(path)` | ZIP |
 | `delete_cmd(path, permanent)` | do koše, nebo nevratně (vždy nevratně na Androidu) |
-| `trash_available_cmd()` | je k dispozici systémový koš? |
+| `trash_available_cmd()` | je k dispozici koš? (Windows i Android ano) |
+| `bin_list_cmd()` | obsah koše |
+| `bin_restore_cmd(ids)` | obnoví položky na původní místo, vrací počet |
+| `bin_purge_cmd(ids)` / `bin_empty_cmd()` | smaže vybrané / všechny položky koše nevratně |
 | `create_dir_cmd`, `rename_cmd`, `get_info_cmd` | jednoduché operace |
 | `read_bytes_cmd(path, max_bytes)` | surové bajty pro náhled (binární `ipc::Response`, ne base64) |
 | `read_text_cmd(path)` | textový náhled |
@@ -157,6 +184,14 @@ položek (nejdéle nepoužité se vyhazují a jejich URL se uvolní).
 Prodleva ~250 ms po psaní; každý dotaz nese `job = search-<panel>`; frontend zahazuje
 zastaralé odpovědi a nový dotaz zruší starý i v backendu.
 
+### Koš a tažení v UI
+
+Panel má režim `binMode` (podobně jako `sizesMode`): `startBin` / `loadBin` / `renderBin`;
+otevření složky z něj vyjde. Tažení dolů (`wirePullRefresh`) používá dotykové události na
+posuvném kontejneru panelu: spustí se jen při `scrollTop == 0`, převažuje-li svislý pohyb;
+práh 64 px; po puštění se zavolá `refresh(p)` a `loadPlaces()`. CSS `overscroll-behavior-y: contain`
+brání dalšímu posunu stránky.
+
 ### Dialogy
 
 `window.prompt/confirm/alert` ve webview nefungují spolehlivě, proto vlastní
@@ -173,7 +208,7 @@ zastaralé odpovědi a nový dotaz zruší starý i v backendu.
 | | Windows | Android |
 |---|---|---|
 | Kořeny / místa | domov, standardní složky, disky `C:`–`Z:` | `/storage/emulated/0`, jeho standardní složky, SD karty |
-| Mazání | koš (`trash`) nebo nevratně | vždy nevratně |
+| Mazání | systémový koš (`trash`) nebo nevratně | vlastní koš aplikace (`.FileManagerTrash`) nebo nevratně |
 | Dva panely | ano (≥ 900 px) | ne |
 | Oprávnění | – | `MANAGE_EXTERNAL_STORAGE` (Přístup ke všem souborům) |
 | `trash` crate | ano | nepřekládá se (`cfg(not(target_os = "android"))`) |

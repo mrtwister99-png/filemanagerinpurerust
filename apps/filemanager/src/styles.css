@@ -77,6 +77,18 @@ select{padding:9px;border-radius:10px;background:#171a21;color:#fff;border:1px s
 .selbar span{font-weight:700;margin-right:auto}
 .selbar button{padding:6px 10px}
 .panes:not(.dual) .dualOnly{display:none}
+.sidebar{display:flex;flex-direction:column}
+.sbBottom{margin-top:auto;padding-top:14px;border-top:1px solid #262a33}
+.binHead{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 12px;margin:0 12px 8px;border-radius:12px;background:#2a1f1f;border:1px solid #6b3f3f}
+.binHead b{margin-right:auto}
+.binHead button{padding:6px 10px}
+.binRow{display:grid;grid-template-columns:30px minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px 12px;border:1px solid #262a33;background:#171a21;border-radius:12px}
+.binRow .rowActions{display:flex;gap:6px}
+.pane{overscroll-behavior-y:contain}
+.ptr{height:0;overflow:hidden;display:flex;align-items:flex-end;justify-content:center;color:#9aa3b2;font-size:13px;flex:none;transition:height .18s ease}
+.ptr.drag{transition:none}
+.ptr.ready{color:#f59e0b}
+.ptr .ptrTxt{padding-bottom:8px}
 .sizesHead{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 12px;margin:0 12px 8px;border-radius:12px;background:#22202b;border:1px solid #4a3f6b}
 .sizesHead b{margin-right:auto}
 .sizesHead button{padding:6px 10px}

@@ -64,6 +64,7 @@ async function invoke(cmd, args = {}) {
     if (cmd === "list_roots_cmd") return ["/"];
     if (cmd === "storage_state_cmd") return "desktop";
     if (cmd === "trash_available_cmd") return false;
+    if (cmd === "bin_list_cmd") return [];
     if (cmd === "list_places_cmd") return [{ label: "Domů", path: "/", kind: "home", space: null }];
     if (cmd === "search_cmd") return { hits: [], truncated: false, cancelled: false };
     if (cmd === "list_dir_cmd") return [
@@ -235,6 +236,10 @@ function makePane(idx, saved) {
     sizes: null,
     sizesErr: "",
     sizesToken: 0,
+    binMode: false,
+    bin: null,
+    binErr: "",
+    binToken: 0,
   };
   if (saved && Array.isArray(saved.tabs) && saved.tabs.length) {
     p.tabs = saved.tabs
@@ -268,6 +273,8 @@ async function openPath(p, path, opts = {}) {
   if (!path) path = app.home || ".";
   const tab = curTab(p);
   const token = ++p.loadToken;
+  p.binMode = false;
+  p.binToken++;
   try {
     const items = await listPath(path);
     if (token !== p.loadToken) return;
@@ -301,6 +308,7 @@ async function openPath(p, path, opts = {}) {
 
 async function refresh(p) {
   if (!p.loaded) return;
+  if (p.binMode) { await loadBin(p); return; }
   if (p.query) { runSearch(p); return; }
   const path = curTab(p).path || app.home;
   const token = ++p.loadToken;
@@ -420,8 +428,10 @@ function render(p) {
   renderClipboard(p);
   p.q(".btnView").textContent = app.view === "grid" ? "☰" : "▦";
   p.q(".btnView").title = app.view === "grid" ? "Zobrazit jako seznam" : "Zobrazit jako mřížku s náhledy";
-  p.q(".sizesHead").hidden = !p.sizesMode;
+  p.q(".sizesHead").hidden = !p.sizesMode || p.binMode;
+  p.q(".binHead").hidden = !p.binMode;
   updateFilterBtn(p);
+  if (p.binMode) { renderBin(p); return; }
   if (p.sizesMode) { renderSizes(p); return; }
 
   const items = sortedEntries(p);
@@ -633,6 +643,116 @@ function renderSizes(p) {
       <div class="szSize">${esc(e.size_human)}</div>
     </div>`;
   }).join("");
+}
+
+/* ---------- kos ---------- */
+
+function startBin(p) {
+  cancelSearch(p);
+  p.sizesMode = false;
+  p.sizesToken++;
+  p.binMode = true;
+  p.sel.clear();
+  p.bin = null;
+  render(p);
+  loadBin(p);
+  renderSidebarHere();
+}
+
+function stopBin(p) {
+  p.binMode = false;
+  p.binToken++;
+  renderSidebarHere();
+  refresh(p);
+}
+
+async function loadBin(p) {
+  const token = ++p.binToken;
+  p.binErr = "";
+  try {
+    const list = await invoke("bin_list_cmd");
+    if (token !== p.binToken) return;
+    p.bin = list;
+  } catch (err) {
+    if (token !== p.binToken) return;
+    p.bin = [];
+    p.binErr = String(err);
+  }
+  if (p.binMode) render(p);
+}
+
+function renderBin(p) {
+  const listEl = p.q(".list");
+  listEl.classList.remove("grid");
+  p.q(".empty").hidden = true;
+  p.q(".crumbs").innerHTML = `<b data-home="1">🏠 Domů</b> / Koš`;
+  if (p.bin === null) {
+    p.shown = [];
+    p.q(".status").textContent = "Načítám koš…";
+    listEl.innerHTML = `<div class="busy"><div class="spin"></div>Načítám…</div>`;
+    return;
+  }
+  const items = p.bin;
+  p.shown = items;
+  p.q(".status").textContent = p.binErr
+    ? `Chyba: ${p.binErr}`
+    : (items.length ? `V koši: ${plural(items.length, "položka", "položky", "položek")}` : "Koš je prázdný");
+  if (!items.length && !p.binErr) {
+    p.q(".empty").hidden = false;
+    p.q(".empty").textContent = "Koš je prázdný";
+  }
+  listEl.innerHTML = items.map((e, i) => {
+    const sub = [`původně ${e.original_dir || "?"}`, `smazáno ${fmtDate(e.deleted_unix)}`];
+    if (!e.is_dir) sub.push(fmtSize(e.size));
+    return `<div class="item binRow" data-i="${i}" title="${esc(e.name)}">
+      <div class="icon">${e.is_dir ? "📁" : "📄"}</div>
+      <div class="name"><b>${esc(e.name)}</b><small>${esc(sub.join(" • "))}</small></div>
+      <div class="rowActions">
+        <button data-bin="restore" data-i="${i}" title="Obnovit na původní místo">♻ Obnovit</button>
+        <button data-bin="purge" data-i="${i}" class="danger" title="Smazat nevratně">✕</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+async function binRestore(p, items) {
+  if (!items.length) return;
+  try {
+    const n = await invoke("bin_restore_cmd", { ids: items.map((e) => e.id) });
+    toast(n === 1 ? `Obnoveno: ${items[0].name}` : `Obnoveno: ${plural(n, "položka", "položky", "položek")}`);
+  } catch (err) {
+    await notify("Obnovit nelze", String(err));
+  }
+  refreshAll();
+}
+
+async function binPurge(p, items) {
+  if (!items.length) return;
+  const what = items.length === 1 ? `„${items[0].name}“` : plural(items.length, "položka", "položky", "položek");
+  const ok = await askConfirm("Smazat z koše", `${what} bude smazáno nevratně. Pokračovat?`, "Smazat");
+  if (!ok) return;
+  try {
+    await invoke("bin_purge_cmd", { ids: items.map((e) => e.id) });
+    toast("Smazáno z koše");
+  } catch (err) {
+    await notify("Smazat nelze", String(err));
+  }
+  refreshAll();
+}
+
+async function binEmpty(p) {
+  if (!p.bin || !p.bin.length) { toast("Koš je prázdný"); return; }
+  const ok = await askConfirm("Vysypat koš", `Všech ${plural(p.bin.length, "položka", "položky", "položek")} v koši bude smazáno nevratně. Pokračovat?`, "Vysypat");
+  if (!ok) return;
+  toast("Vysypávám koš…", 0);
+  try {
+    await invoke("bin_empty_cmd");
+    toast("Koš vysypán");
+  } catch (err) {
+    toastHide();
+    await notify("Vysypat nelze", String(err));
+  }
+  refreshAll();
 }
 
 /* ---------- hledani ---------- */
@@ -940,7 +1060,8 @@ function renderSidebarHere() {
   if (!p) return;
   const here = curTab(p).path;
   document.querySelectorAll("#sidebar .place").forEach((b) => {
-    b.classList.toggle("here", samePath(b.dataset.path, here));
+    if (b.dataset.bin) b.classList.toggle("here", !!p.binMode);
+    else b.classList.toggle("here", !p.binMode && samePath(b.dataset.path, here));
   });
 }
 
@@ -1155,6 +1276,60 @@ function hidePermBanner() { $("#permBanner").hidden = true; }
 
 /* ---------- udalosti panelu ---------- */
 
+/* Potazeni seznamu dolu na dotykovem displeji = obnoveni (jen kdyz je seznam nahore). */
+const PTR_AT = 64;
+function wirePullRefresh(p) {
+  const el = p.el;
+  const ind = p.q(".ptr");
+  const txt = p.q(".ptrTxt");
+  let x0 = 0, y0 = null, pull = 0, busy = false;
+
+  const reset = () => {
+    y0 = null;
+    pull = 0;
+    ind.classList.remove("drag", "ready");
+    ind.style.height = "0px";
+  };
+
+  el.addEventListener("touchstart", (ev) => {
+    if (busy || ev.touches.length !== 1 || el.scrollTop > 0) { y0 = null; return; }
+    x0 = ev.touches[0].clientX;
+    y0 = ev.touches[0].clientY;
+    pull = 0;
+  }, { passive: true });
+
+  el.addEventListener("touchmove", (ev) => {
+    if (y0 === null) return;
+    const dy = ev.touches[0].clientY - y0;
+    const dx = Math.abs(ev.touches[0].clientX - x0);
+    if (el.scrollTop > 0 || dy <= 0 || dx > dy) { reset(); return; }
+    pull = Math.min(dy * 0.5, 110);
+    ind.classList.add("drag");
+    ind.style.height = pull + "px";
+    const ready = pull >= PTR_AT;
+    ind.classList.toggle("ready", ready);
+    txt.textContent = ready ? "↑ Pusť pro obnovení" : "↓ Potáhni pro obnovení";
+  }, { passive: true });
+
+  const end = async () => {
+    const go = y0 !== null && pull >= PTR_AT;
+    if (!go) { reset(); return; }
+    busy = true;
+    ind.classList.remove("drag");
+    ind.style.height = "44px";
+    txt.textContent = "Obnovuji…";
+    try {
+      await Promise.all([refresh(p), loadPlaces()]);
+    } finally {
+      busy = false;
+      reset();
+      txt.textContent = "↓ Potáhni pro obnovení";
+    }
+  };
+  el.addEventListener("touchend", end);
+  el.addEventListener("touchcancel", reset);
+}
+
 function wirePane(p) {
   const el = p.el;
   el.addEventListener("pointerdown", () => setActive(p.idx), true);
@@ -1219,12 +1394,29 @@ function wirePane(p) {
     else stopSizes(p);
   });
 
+  p.q(".binHead").addEventListener("click", (ev) => {
+    const b = ev.target.closest("[data-bin]");
+    if (!b) return;
+    if (b.dataset.bin === "empty") binEmpty(p);
+    else stopBin(p);
+  });
+
+  wirePullRefresh(p);
+
   const list = p.q(".list");
   list.addEventListener("click", (ev) => {
     const item = ev.target.closest(".item");
     if (!item || ev.target.closest(".pick")) return;
     const e = p.shown[Number(item.dataset.i)];
     if (!e) return;
+    if (p.binMode) {
+      const bb = ev.target.closest("button[data-bin]");
+      if (!bb) return;
+      ev.stopPropagation();
+      if (bb.dataset.bin === "restore") binRestore(p, [e]);
+      else if (bb.dataset.bin === "purge") binPurge(p, [e]);
+      return;
+    }
     const btn = ev.target.closest("button[data-act]");
     if (btn) {
       ev.stopPropagation();
@@ -1303,6 +1495,7 @@ $("#btnPinCur").onclick = () => togglePin(curTab(activePane()).path);
 $("#sidebar").addEventListener("click", (ev) => {
   const un = ev.target.closest("[data-unpin]");
   if (un) { togglePin(un.dataset.unpin); return; }
+  if (ev.target.closest("[data-bin]")) { startBin(activePane()); closeDrawer(); return; }
   const pl = ev.target.closest(".place[data-path]");
   if (!pl) return;
   openPath(activePane(), pl.dataset.path);

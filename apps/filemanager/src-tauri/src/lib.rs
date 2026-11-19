@@ -26,6 +26,10 @@ pub fn run() {
             commands::zip_cmd,
             commands::unzip_cmd,
             commands::trash_available_cmd,
+            commands::bin_list_cmd,
+            commands::bin_restore_cmd,
+            commands::bin_purge_cmd,
+            commands::bin_empty_cmd,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -6,6 +6,7 @@
 //!   let hits = filecore::search(".", "fotka", 50);
 
 pub mod archive;
+pub mod bin;
 pub mod format;
 pub mod models;
 pub mod ops;
@@ -16,6 +17,7 @@ pub mod sizes;
 pub mod thumbs;
 pub mod transfer;
 
+pub use bin::{bin_available, bin_empty, bin_list, bin_purge, bin_put, bin_restore, BinItem};
 pub use archive::{unzip_archive, zip_entries};
 pub use models::{FileEntry, FileInfo, FileKind, Place, SearchResult, SizeEntry, SpaceInfo};
 pub use ops::{

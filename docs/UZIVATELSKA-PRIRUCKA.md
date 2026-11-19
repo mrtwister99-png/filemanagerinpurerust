@@ -17,6 +17,10 @@ Ovládání je stejné na PC i na telefonu. Rozdíly jsou vždy zmíněné.
 
 ## Procházení souborů
 
+> **Na telefonu:** seznam obnovíš **tažením dolů** (když jsi nahoře): ukáže se „Potáhni pro
+> obnovení“, při dostatečném tažení „Pusť pro obnovení“ a po puštění se načte znovu složka
+> i volné místo na discích.
+
 - **Klik na složku** ji otevře, **klik na soubor** otevře náhled.
 - Zaškrtávací políčko vlevo vybírá položky (viz Výběr).
 - Pod lištou je **drobečková navigace** (`Domů / C: / Users / …`) – každý díl je klikací.
@@ -67,11 +71,31 @@ Tlačítko **Zrušit** (nebo klávesa Esc) operaci zastaví:
 Přesun v rámci jednoho disku je jen přejmenování a proběhne okamžitě.
 Najednou může běžet jen jedna operace.
 
-## Mazání
+## Mazání a Koš
 
-- **Windows**: smazání jde do **Koše**. Chceš-li smazat nevratně, zaškrtni v potvrzení
-  „nevratně“, nebo klikni na 🗑 se stisknutým **Shiftem**.
-- **Android**: systémový koš není, mazání je vždy **nevratné** – potvrzovací okno to říká.
+Smazání (🗑 u položky, nebo **Smazat** u výběru) přesune položku do **koše**:
+
+- **Windows**: do systémového Koše Windows.
+- **Android**: do vlastního koše aplikace (skrytá složka `.FileManagerTrash` v kořeni
+  úložiště). Systémový koš Android nemá, proto ho aplikace drží sama.
+
+Chceš-li smazat **nevratně** (bez koše), zaškrtni v potvrzení „Smazat nevratně“, nebo klikni
+na 🗑 se stisknutým **Shiftem** (na telefonu zaškrtávátkem).
+
+### Okno Koše
+
+Položka **🗑 Koš** je úplně dole v postranním panelu. Otevře seznam smazaných věcí
+(název, odkud byla smazána, kdy a velikost):
+
+| Tlačítko | Co dělá |
+|---|---|
+| **♻ Obnovit** | vrátí položku na původní místo; pokud tam už něco stejného leží, dostane číslo (`foto (1).jpg`); pokud původní složka neexistuje, ukáže chybu |
+| **✕** | smaže položku z koše nevratně (se zeptá) |
+| **Vysypat koš** | smaže nevratně vše v koši (se zeptá) |
+| **Zavřít koš** | vrátí běžný pohled na složky |
+
+Pozor: ve Windows je to tvůj **skutečný Koš** (včetně věcí smazaných jinými programy), takže
+„Vysypat koš“ smaže i je. Načtení velkého koše (tisíce položek) trvá několik vteřin.
 
 ## Přejmenování a nová složka
 
@@ -128,6 +152,11 @@ Po zavření a znovuotevření se obnoví otevřené karty, řazení, seznam/mř
 zapnuté dva panely a připnuté složky. Pokud složka mezitím zmizela, otevře se domovská.
 Stav je uložený v prohlížečovém úložišti aplikace (viz [INSTALACE.md](INSTALACE.md),
 sekce Řešení problémů, jak ho vynulovat).
+
+## Android: stavová a navigační lišta
+
+Aplikace se drží **mezi** horní stavovou lištou (hodiny, baterie, signál) a spodní navigační
+lištou (tlačítka Zpět / Domů / Přehled nebo gesta); nic z ovládání pod ně nezajíždí.
 
 ## Android: oprávnění
 

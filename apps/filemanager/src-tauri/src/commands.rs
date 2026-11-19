@@ -142,6 +142,30 @@ pub fn trash_available_cmd() -> bool {
 }
 
 /// Smazani: do kose, nebo nevratne pri `permanent = true` (a vzdy na Androidu).
+/// Obsah kose (Windows: systemovy kos, Android: vlastni kos appky).
+#[tauri::command]
+pub async fn bin_list_cmd() -> Result<Vec<filecore::BinItem>, String> {
+    blocking(|| filecore::bin_list().map_err(|e| e.to_string())).await
+}
+
+/// Obnovi polozky kose na puvodni misto; vraci pocet obnovenych.
+#[tauri::command]
+pub async fn bin_restore_cmd(ids: Vec<String>) -> Result<usize, String> {
+    blocking(move || filecore::bin_restore(&ids).map_err(|e| e.to_string())).await
+}
+
+/// Nenavratne smaze vybrane polozky z kose.
+#[tauri::command]
+pub async fn bin_purge_cmd(ids: Vec<String>) -> Result<(), String> {
+    blocking(move || filecore::bin_purge(&ids).map_err(|e| e.to_string())).await
+}
+
+/// Vysype cely kos.
+#[tauri::command]
+pub async fn bin_empty_cmd() -> Result<(), String> {
+    blocking(|| filecore::bin_empty().map_err(|e| e.to_string())).await
+}
+
 #[tauri::command]
 pub async fn delete_cmd(path: String, permanent: Option<bool>) -> Result<(), String> {
     blocking(move || {

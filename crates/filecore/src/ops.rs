@@ -124,9 +124,9 @@ pub fn delete_entry<P: AsRef<Path>>(path: P) -> std::io::Result<()> {
     }
 }
 
-/// Ma tahle platforma systemovy kos? Na Androidu ne, tam je mazani vzdy nevratne.
+/// Je k dispozici kos? Desktop: systemovy, Android: vlastni kos appky (viz `bin`).
 pub fn trash_available() -> bool {
-    cfg!(not(target_os = "android"))
+    crate::bin::bin_available()
 }
 
 /// Presune soubor nebo slozku do systemoveho kose (na Windows Kos).
@@ -137,11 +137,8 @@ pub fn trash_entry<P: AsRef<Path>>(path: P) -> std::io::Result<()> {
     }
     #[cfg(target_os = "android")]
     {
-        let _ = path;
-        Err(std::io::Error::new(
-            std::io::ErrorKind::Unsupported,
-            "Na Androidu není systémový koš",
-        ))
+        // Android: vlastni kos appky
+        crate::bin::bin_put(path.as_ref())
     }
 }
 

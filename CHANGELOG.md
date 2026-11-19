@@ -5,6 +5,12 @@ Formát vychází z [Keep a Changelog](https://keepachangelog.com/cs/1.1.0/).
 ## [Nevydáno]
 
 ### Přidáno
+- **Koš** jako položka dole v postranním panelu: výpis, obnovení na původní místo, smazání
+  nevratně a vysypání. Windows: systémový Koš; Android: vlastní koš aplikace
+  (`.FileManagerTrash`), takže i na telefonu se maže do koše místo nevratně.
+- Obnovení seznamu **tažením dolů** (dotykové displeje).
+- Android: obsah aplikace se drží mezi stavovou a navigační lištou (hodiny, baterie,
+  tlačítka Zpět/Domů); upravuje se skriptem `scripts/android_manifest_perms.py`.
 - Windows instalátory (`.msi` a NSIS `.exe`) přes `cargo tauri build`; v `tauri.conf.json`
   doplněn seznam ikon `bundle.icon`.
 

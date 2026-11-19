@@ -18,10 +18,11 @@ na Windows i na Androidu.**
 | **Miniatury** | v mřížce skutečné náhledy obrázků (jpg, png, gif, webp, bmp), generuje je Rust |
 | **Hledání** | v názvu i v obsahu textových souborů; filtry typ / velikost / datum / hloubka; zrušitelné |
 | **Kopírování a přesun** | složky i soubory, ukazatel průběhu a tlačítko Zrušit, kolize názvů `foto (1).jpg` |
-| **Koš** | na desktopu mazání do koše Windows (nebo nevratně); na Androidu nevratně |
+| **Koš** | mazání do koše (Windows: systémový koš, Android: vlastní koš aplikace); položka „Koš“ dole v postranním panelu – obnovit, smazat nevratně, vysypat |
 | **ZIP** | zabalit výběr, rozbalit archiv (s ochranou proti `../` cestám) |
 | **Analýza místa** | co ve složce zabírá nejvíc, s proklikem do podsložek |
 | **Náhled** | obrázky, audio, video a text přímo v aplikaci; „Otevřít v systému“ |
+| **Telefon** | tažením seznamu dolů se obnoví; obsah se drží mezi stavovou a navigační lištou (hodiny, baterie, tlačítka Zpět/Domů) |
 | **Paměť** | po startu se obnoví karty, řazení, zobrazení, připnuté složky |
 
 Podrobně v [uživatelské příručce](docs/UZIVATELSKA-PRIRUCKA.md).

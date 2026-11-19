@@ -93,7 +93,8 @@ Vygeneruje složku `apps/filemanager/src-tauri/gen/android`. Ta se **neukládá 
 
 ### Sestavení
 
-Jednoduše skriptem (dohledá NDK, doplní oprávnění do manifestu, postaví APK):
+Jednoduše skriptem (dohledá NDK, doplní oprávnění do manifestu, upraví `MainActivity.kt` tak,
+aby obsah nelezl pod systémové lišty, a postaví APK):
 
 ```powershell
 scripts\build-android.bat
@@ -188,6 +189,7 @@ nenahrávej do gitu.**
 | `cargo tauri: command not found` | `cargo install tauri-cli --version "^2" --locked` a restart terminálu |
 | `adb devices` je prázdné | jiný kabel/port, znovu povolit Ladění USB, režim USB „Přenos souborů“ |
 | `adb devices` ukáže `unauthorized` | v telefonu potvrď dotaz „Povolit ladění USB“ |
+| Na telefonu obsah zajíždí pod hodiny nahoře nebo pod tlačítka dole | `MainActivity.kt` v `gen/` není upravený (po novém `cargo tauri android init` se přepíše): spusť `python scripts/android_manifest_perms.py` (nebo `scripts\build-android.bat`) a postav APK znovu |
 | Na telefonu prázdné nebo nedostupné složky | chybí Přístup ke všem souborům (bod 5) |
 | Android ukáže „Kompatibilita aplikací… 16KB“ | knihovna není zarovnaná na 16KB stránky (Android 15+). Řeší to `.cargo/config.toml` s linker flagem `-z max-page-size=16384`; pokud varování vidíš u starého APK, sestav a nainstaluj ho znovu. Ověření: `llvm-readelf -lW libfilemanager_lib.so \| findstr LOAD` – zarovnání musí být `0x4000` |
 | `The process cannot access the file … filemanager.exe` při buildu | aplikace ještě běží: zavři ji (`taskkill /F /IM filemanager.exe`) |

@@ -44,6 +44,9 @@
       <button id="btnPinCur" class="sbBtn" title="Připnout aktuální složku">📌 +</button>
     </div>
     <nav id="pins" class="places"></nav>
+    <div class="sbBottom">
+      <button id="btnBin" class="place binPlace" data-bin="1" title="Koš"><span class="pl">🗑 Koš</span></button>
+    </div>
   </aside>
   <div id="backdrop" class="backdrop" hidden></div>
   <div id="panes" class="panes"></div>
@@ -51,6 +54,7 @@
 
 <template id="paneTpl">
   <section class="pane">
+    <div class="ptr"><span class="ptrTxt">↓ Potáhni pro obnovení</span></div>
     <div class="paneHead">
       <div class="tabs">
         <div class="tabList"></div>
@@ -118,6 +122,12 @@
       <b>📊 Analýza místa</b>
       <button data-sz="up">↑ O úroveň výš</button>
       <button data-sz="close">Zavřít analýzu</button>
+    </div>
+
+    <div class="binHead" hidden>
+      <b>🗑 Koš</b>
+      <button data-bin="empty" class="danger">Vysypat koš</button>
+      <button data-bin="close">Zavřít koš</button>
     </div>
 
     <div class="crumbs"></div>
