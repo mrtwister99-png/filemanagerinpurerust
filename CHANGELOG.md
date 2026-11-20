@@ -5,6 +5,8 @@ Formát vychází z [Keep a Changelog](https://keepachangelog.com/cs/1.1.0/).
 ## [Nevydáno]
 
 ### Přidáno
+- **Upravitelná cesta**: klik na ✎ za cestou, na prázdné místo vedle ní nebo Ctrl+L změní
+  drobečkovou navigaci na textové pole s celou cestou (Enter přejde, Esc zruší).
 - Release APK (~9 MB, podepsané vlastním klíčem, bez ladění) místo 220MB debug APK;
   podepisování se nastavuje skriptem `scripts/android_manifest_perms.py`, klíč leží mimo repozitář.
 - **Koš** jako položka dole v postranním panelu: výpis, obnovení na původní místo, smazání

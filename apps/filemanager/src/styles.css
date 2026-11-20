@@ -95,6 +95,12 @@ select{padding:9px;border-radius:10px;background:#171a21;color:#fff;border:1px s
 .crumbs{padding:0 14px 6px;color:#9aa3b2;font-size:13px;word-break:break-all;line-height:1.7}
 .crumbs b{color:#fff;cursor:pointer}
 .crumbs b:hover{color:#f59e0b}
+.crumbs{cursor:text}
+.crumbs b{cursor:pointer}
+.crumbEdit{margin-left:8px;cursor:pointer;opacity:.55;padding:0 4px}
+.crumbEdit:hover{opacity:1;color:#f59e0b}
+.crumbInput{width:100%;padding:6px 10px;border-radius:8px;border:1px solid #f59e0b;background:#0f1115;color:#fff;font:inherit;word-break:normal}
+.crumbInput:focus{outline:none}
 .status{padding:0 14px 10px;color:#9aa3b2;font-size:13px}
 
 /* seznam */

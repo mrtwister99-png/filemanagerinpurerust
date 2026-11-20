@@ -24,6 +24,10 @@ Ovládání je stejné na PC i na telefonu. Rozdíly jsou vždy zmíněné.
 - **Klik na složku** ji otevře, **klik na soubor** otevře náhled.
 - Zaškrtávací políčko vlevo vybírá položky (viz Výběr).
 - Pod lištou je **drobečková navigace** (`Domů / C: / Users / …`) – každý díl je klikací.
+- **Přepsání celé cesty:** klikni na **✎** za cestou, na prázdné místo vedle ní, nebo stiskni
+  **Ctrl+L**. Cesta se změní na textové pole; přepiš ji (nebo vlož zkopírovanou, např.
+  `D:\Fotky\2026`) a stiskni **Enter**. **Esc** nebo klik jinam to zruší. Neexistující cesta
+  ukáže chybu a zůstaneš v původní složce. `D:` bez zpětného lomítka funguje taky.
 - **Řazení** (Název / Velikost / Datum / Typ) je vedle vyhledávacího pole. Složky jsou vždy první.
 - Tlačítko s mřížkou přepíná **seznam ↔ mřížka**. V mřížce mají obrázky miniatury.
 - **Skryté soubory** (začínají tečkou) se zapínají v menu `⋯`.

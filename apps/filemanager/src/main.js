@@ -240,6 +240,7 @@ function makePane(idx, saved) {
     bin: null,
     binErr: "",
     binToken: 0,
+    editingPath: false,
   };
   if (saved && Array.isArray(saved.tabs) && saved.tabs.length) {
     p.tabs = saved.tabs
@@ -496,10 +497,52 @@ function render(p) {
 }
 
 function renderCrumbs(p) {
+  if (p.editingPath) return;
   const el = p.q(".crumbs");
   const parts = crumbsOf(curTab(p).path);
   el.innerHTML = `<b data-home="1">🏠 Domů</b>`
-    + parts.map((c, i) => ` / <b data-c="${i}" data-path="${esc(c.path)}">${esc(c.label)}</b>`).join("");
+    + parts.map((c, i) => ` / <b data-c="${i}" data-path="${esc(c.path)}">${esc(c.label)}</b>`).join("")
+    + ` <span class="crumbEdit" title="Přepsat celou cestu (Ctrl+L)">✎</span>`;
+}
+
+/* Upravitelna cesta: klik na ✎ / prazdne misto vedle cesty (nebo Ctrl+L) zmeni drobeckovou
+   navigaci na textove pole s celou cestou. Enter = prejit, Esc = zrusit. */
+function startEditPath(p) {
+  if (p.editingPath || p.binMode) return;
+  p.editingPath = true;
+  const el = p.q(".crumbs");
+  const cur = curTab(p).path || "";
+  el.innerHTML = `<input class="crumbInput" type="text" spellcheck="false" autocomplete="off" autocapitalize="off" />`;
+  const input = el.querySelector("input");
+  input.value = cur;
+  input.focus();
+  input.select();
+  let done = false;
+  const finish = (go) => {
+    if (done) return;
+    done = true;
+    p.editingPath = false;
+    const val = input.value.trim().replace(/^"(.*)"$/, "$1");
+    renderCrumbs(p);
+    if (go && val && val !== cur) goToTypedPath(p, val);
+  };
+  input.addEventListener("keydown", (ev) => {
+    if (ev.key === "Enter") { ev.preventDefault(); finish(true); }
+    else if (ev.key === "Escape") { ev.stopPropagation(); finish(false); }
+  });
+  input.addEventListener("blur", () => finish(false));
+}
+
+async function goToTypedPath(p, text) {
+  let path = text;
+  if (/^[A-Za-z]:$/.test(path)) path += "\\";   // "D:" -> "D:\\" (jinak by znamenalo aktualni slozku disku)
+  try {
+    await listPath(path);
+  } catch (err) {
+    await notify("Cestu nelze otevřít", `„${text}“ neexistuje nebo to není složka.\n${String(err)}`);
+    return;
+  }
+  openPath(p, path);
 }
 
 function renderSelection(p) {
@@ -1272,7 +1315,19 @@ function notify(title, text) {
 /* ---------- Android oprávnění ---------- */
 
 function showPermBanner() { $("#permBanner").hidden = false; }
-function hidePermBanner() { $("#permBanner").hidden = true; }
+// Banner zustava, dokud chybi pristup ke vsem souborum (vypis slozky funguje i bez nej,
+// jen je oklesteny - bez APK, PDF a dalsich souboru).
+function hidePermBanner() { $("#permBanner").hidden = !app.storageMissing; }
+
+async function checkStorage() {
+  let state = "desktop";
+  try { state = await invoke("storage_state_cmd"); } catch { }
+  const missing = state === "missing";
+  const was = !!app.storageMissing;
+  app.storageMissing = missing;
+  $("#permBanner").hidden = !missing;
+  if (was && !missing) { refreshAll(); loadPlaces(); }
+}
 
 /* ---------- udalosti panelu ---------- */
 
@@ -1348,6 +1403,8 @@ function wirePane(p) {
   p.q(".tabNew").onclick = () => newTab(p);
 
   p.q(".crumbs").addEventListener("click", (ev) => {
+    if (ev.target.closest(".crumbInput")) return;
+    if (ev.target.closest(".crumbEdit") || ev.target === ev.currentTarget) { startEditPath(p); return; }
     const b = ev.target.closest("b");
     if (!b) return;
     openPath(p, b.dataset.home ? app.home : b.dataset.path);
@@ -1522,6 +1579,11 @@ $("#dlgCancel").onclick = () => closeDialog(null);
 $("#dlgCheck").onchange = () => { if (dlgOnCheck) dlgOnCheck($("#dlgCheck").checked); };
 
 document.addEventListener("keydown", (ev) => {
+  if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === "l") {
+    ev.preventDefault();
+    startEditPath(activePane());
+    return;
+  }
   if (ev.key !== "Escape") return;
   if (!$("#dialog").hidden) closeDialog(null);
   else if (!$("#progress").hidden) cancelTransfer();
@@ -1579,10 +1641,12 @@ async function init() {
   await openPath(app.panes[0], curTab(app.panes[0]).path, { push: false, silent: true });
   loadPlaces();
 
-  try {
-    const state = await invoke("storage_state_cmd");
-    if (state === "missing") showPermBanner();
-  } catch { }
+  await checkStorage();
+  // Po navratu z nastaveni Androidu (kde se povoluje pristup) znovu zkontrolovat
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") checkStorage();
+  });
+  window.addEventListener("focus", checkStorage);
 }
 
 init();

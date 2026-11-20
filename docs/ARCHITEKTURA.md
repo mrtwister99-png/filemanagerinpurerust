@@ -184,6 +184,13 @@ položek (nejdéle nepoužité se vyhazují a jejich URL se uvolní).
 Prodleva ~250 ms po psaní; každý dotaz nese `job = search-<panel>`; frontend zahazuje
 zastaralé odpovědi a nový dotaz zruší starý i v backendu.
 
+### Upravitelná cesta
+
+`renderCrumbs` kreslí drobečky + `✎`; `startEditPath(p)` je nahradí textovým polem
+(`p.editingPath` brání přepsání při překreslení), Enter volá `goToTypedPath` – nejdřív ověří
+cestu přes `list_dir_cmd` (chyba → dialog, původní složka zůstane), pak `openPath`.
+Zkratka Ctrl+L je globální a platí pro aktivní panel.
+
 ### Koš a tažení v UI
 
 Panel má režim `binMode` (podobně jako `sizesMode`): `startBin` / `loadBin` / `renderBin`;

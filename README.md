@@ -12,6 +12,7 @@ na Windows i na Androidu.**
 | | |
 |---|---|
 | **Procházení** | seznam nebo mřížka, řazení (název / velikost / datum / typ), skryté soubory, drobečková navigace, Zpět / Nahoru / Domů, tlačítka disků (C:, D:…) |
+| **Cesta** | klik na ✎ / Ctrl+L = přepsání celé cesty textem (Enter přejde, Esc zruší) |
 | **Postranní panel** | Místa (domov, Stažené, Dokumenty…, disky s volným místem, na Androidu i SD karta) a vlastní Připnuté složky |
 | **Karty** | více karet v každém panelu, každá s vlastní složkou a historií |
 | **Dva panely** | vedle sebe, jen na desktopu; kopírování a přesun do druhého panelu |
@@ -69,6 +70,11 @@ docs/                   dokumentace
 Rust 2021 · Tauri 2 · `rayon` (paralelní hledání a velikosti) · `walkdir` · `image`
 (jen pure-Rust dekodéry) · `zip` (jen deflate) · `fs4` (volné místo) · `trash` (jen desktop).
 Závislosti jádra jsou schválně bez C knihoven, aby se vše bez potíží přeložilo i pro Android.
+
+## Licence
+
+[MIT](LICENSE) – kód můžeš volně používat, upravovat i šířit, stačí ponechat jméno autora
+a text licence. Bez záruky.
 
 ## Stav projektu
 

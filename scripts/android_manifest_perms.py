@@ -38,15 +38,20 @@ ACTIVITY = os.path.join(
 
 ACTIVITY_SRC = """package cz.tvojefm.filemanager
 
+import android.content.Intent
 import android.graphics.Color
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.provider.Settings
 import android.view.View
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 
-// FM-INSETS: upraveno skriptem scripts/android_manifest_perms.py
+// FM-ACTIVITY-V2: upraveno skriptem scripts/android_manifest_perms.py
 class MainActivity : TauriActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     // Tmava appka -> svetle ikony ve stavove a navigacni liste
@@ -69,6 +74,27 @@ class MainActivity : TauriActivity() {
       WindowInsetsCompat.CONSUMED
     }
   }
+
+  // Bez "Pristupu ke vsem souborum" Android skryje APK, PDF a dalsi soubory ve Stazenych.
+  // Po startu otevreme rovnou prislusnou obrazovku nastaveni (jednou za spusteni appky).
+  private var askedAllFiles = false
+
+  override fun onResume() {
+    super.onResume()
+    if (askedAllFiles || Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return
+    if (Environment.isExternalStorageManager()) return
+    askedAllFiles = true
+    try {
+      startActivity(
+        Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.parse("package:" + packageName))
+      )
+    } catch (e: Exception) {
+      try {
+        startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
+      } catch (_: Exception) {
+      }
+    }
+  }
 }
 """
 
@@ -79,7 +105,7 @@ def patch_activity() -> int:
         return 1
     with open(ACTIVITY, "r", encoding="utf-8") as f:
         text = f.read()
-    if "FM-INSETS" in text:
+    if "FM-ACTIVITY-V2" in text:
         print("MainActivity.kt: okraje uz jsou upravene, nic nemenim.")
         return 0
     with open(ACTIVITY, "w", encoding="utf-8", newline="\n") as f:

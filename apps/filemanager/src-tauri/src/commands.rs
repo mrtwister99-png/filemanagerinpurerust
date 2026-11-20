@@ -254,8 +254,15 @@ pub fn open_with_system_cmd(app: tauri::AppHandle, path: String) -> Result<(), S
 pub fn storage_state_cmd() -> String {
     #[cfg(target_os = "android")]
     {
-        return match std::fs::read_dir("/storage/emulated/0") {
-            Ok(_) => "granted".to_string(),
+        // read_dir korene funguje i bez opravneni (jen vrati okleste obsah: bez APK, PDF...),
+        // proto se zkousi zapis souboru do korene uloziste - to projde jen s pristupem
+        // ke vsem souborum.
+        let probe = std::path::Path::new("/storage/emulated/0/.fm_access_probe");
+        return match std::fs::File::create(probe) {
+            Ok(_) => {
+                let _ = std::fs::remove_file(probe);
+                "granted".to_string()
+            }
             Err(_) => "missing".to_string(),
         };
     }
